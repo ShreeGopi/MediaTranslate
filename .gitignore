@@ -1,3 +1,6 @@
 node_modules/
-TL-backend
-uploads
+TL-backend/
+uploads/
+backend/uploads/
+.env
+*.log
