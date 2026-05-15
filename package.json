@@ -1,14 +1,34 @@
 {
-  "name": "real-time-translation-app",
+  "name": "media-translate-ai",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "A full-stack audio/video translation app that transcribes uploaded media with Whisper and translates the text using LibreTranslate.",
+  "main": "backend/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node backend/server.js",
+    "test": "echo \"No tests configured yet\" && exit 0"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "audio-translation",
+    "video-translation",
+    "speech-to-text",
+    "whisper",
+    "libretranslate",
+    "nodejs",
+    "express",
+    "full-stack",
+    "translation",
+    "transcription"
+  ],
+  "author": "ShreeGopi",
   "license": "ISC",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShreeGopi/Real_Time_Translation_app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ShreeGopi/Real_Time_Translation_app/issues"
+  },
+  "homepage": "https://github.com/ShreeGopi/Real_Time_Translation_app#readme",
   "dependencies": {
     "@google-cloud/speech": "^6.7.0",
     "axios": "^1.7.7",
