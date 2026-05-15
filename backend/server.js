@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('cors'); // Add this line
+const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -7,10 +7,11 @@ const { exec } = require('child_process');
 const axios = require('axios');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+const libreTranslateUrl = process.env.LIBRETRANSLATE_URL || 'http://127.0.0.1:5000';
 
 // Enable CORS
-app.use(cors()); // Add this line
+app.use(cors());
 
 // Middleware to parse JSON and form data
 app.use(express.json());
@@ -18,6 +19,14 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the frontend folder
 app.use(express.static(path.join(__dirname, '../frontend')));
+
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'media-translate-ai',
+        libreTranslateUrl
+    });
+});
 
 // Multer setup for handling file uploads
 const storage = multer.diskStorage({
@@ -50,15 +59,22 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
     // Start the transcription process using Whisper
     const transcriptionProcess = exec(`whisper "${filePath}" --language en --output_dir "${path.dirname(filePath)}"`);
+    let didTimeout = false;
 
     // Set a timeout to handle hanging processes
     const timeout = setTimeout(() => {
+        didTimeout = true;
         transcriptionProcess.kill(); // Kill the process if it takes too long
-        res.status(500).json({ message: 'Transcription process timed out.' });
+        return res.status(500).json({ message: 'Transcription process timed out.' });
     }, 2 * 60 * 1000); // 2 minutes timeout
 
     transcriptionProcess.on('close', async (code) => {
         clearTimeout(timeout); // Clear timeout once process ends
+
+        if (didTimeout) {
+            return;
+        }
+
         console.log(`Transcription process exited with code ${code}`);
         
         if (code !== 0) {
@@ -96,6 +112,11 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
     transcriptionProcess.on('error', (error) => {
         clearTimeout(timeout);
+
+        if (didTimeout) {
+            return;
+        }
+
         console.error('Error in transcription process:', error);
         return res.status(500).json({ message: 'Error in transcription process.' });
     });
@@ -107,7 +128,7 @@ async function translateText(text, targetLanguage) {
         console.log('Text to translate:', text);  // Log the text to be translated
         console.log('Target Language for translation:', targetLanguage);  // Log the target language
 
-        const response = await axios.post('http://127.0.0.1:5000/translate', {
+        const response = await axios.post(`${libreTranslateUrl}/translate`, {
             q: text,
             target: targetLanguage,
             source: 'auto'  // Auto-detect source language
@@ -122,7 +143,7 @@ async function translateText(text, targetLanguage) {
 
 app.get('/languages', async (req, res) => {
     try {
-        const response = await axios.get('http://127.0.0.1:5000/languages');
+        const response = await axios.get(`${libreTranslateUrl}/languages`);
         return res.json(response.data);
     } catch (error) {
         console.error('Error fetching languages:', error.message);
