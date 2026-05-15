@@ -1,207 +1,247 @@
 # Real-Time Video/Audio Translation App
 
-## Overview
-This application empowers users to upload video or audio files, automatically transcribe them using the Whisper engine, and translate the transcription into multiple languages via the LibreTranslate API. It features a user-friendly web interface for seamless file uploads, language selection, and real-time display of translated text.
+Turn an audio or video file into translated text with a simple browser upload. The app takes your media file, transcribes the speech with Whisper, sends the transcript to LibreTranslate, and shows the translated result on the page. Basically: upload file, pick language, let the machines do their dramatic little dance.
 
-## Key Features
-- **File Upload**: Supports uploading audio and video files for processing.
-- **Transcription**: Converts audio to text using the Whisper transcription engine.
-- **Translation**: Automatically translates transcribed text into a target language of your choice using the LibreTranslate API.
-- **Language Support**: Includes multiple languages such as French, Spanish, German, Chinese, Japanese, and more.
-- **User-Friendly Interface**: A clean and minimalistic web interface for easy interaction.
+## What This Project Does
+
+This project is a small full-stack translation app built with a Node.js/Express backend and a plain HTML, CSS, and JavaScript frontend.
+
+It supports:
+
+- Uploading audio and video files from the browser
+- Transcribing spoken audio into text using Whisper
+- Translating the transcript into another language using LibreTranslate
+- Fetching available translation languages from a local LibreTranslate server
+- Displaying the translated text directly in the web interface
+- Handling long transcription jobs with a timeout so the backend does not sit there forever contemplating life
+
+## Tech Stack
+
+- **Frontend:** HTML, CSS, JavaScript
+- **Backend:** Node.js, Express.js
+- **File Uploads:** Multer
+- **API Requests:** Axios
+- **Transcription:** Whisper
+- **Translation:** LibreTranslate
+- **Other Backend Utilities:** CORS, File System, Child Process
 
 ## Project Structure
-real-time-translation-app/
-│ 
-├── backend/ 
-│ ├── uploads/ # Stores uploaded files and transcription results
-│ └── server.js # Express.js server handling file uploads and processing 
-│ ├── frontend/ 
-| ├── Translation-backend
-| ├── translation_models
-│ └── index.html # Web interface for user interactions
-│ └── README.md # Project documentation
 
+```text
+Real_Time_Translation_app/
+├── .github/
+│   └── FUNDING.yml
+├── backend/
+│   └── server.js
+├── frontend/
+│   └── index.html
+├── .gitignore
+├── Readme.md
+├── package.json
+├── package-lock.json
+└── whisper
+```
+
+### Important Files
+
+- `backend/server.js` - Express server that handles uploads, runs Whisper, calls LibreTranslate, and returns the translated text.
+- `frontend/index.html` - Browser interface for uploading files, searching/selecting a language, and viewing results.
+- `package.json` - Node.js dependencies for the backend.
+- `.gitignore` - Ignores generated/local folders such as `node_modules`, `uploads`, and `TL-backend`.
+
+## How It Works
+
+1. The user opens the web app in a browser.
+2. The frontend loads available languages from the backend.
+3. The user uploads an audio or video file.
+4. The backend saves the file in the uploads folder.
+5. Whisper transcribes the uploaded media into a `.txt` file.
+6. The backend reads the transcript.
+7. The transcript is sent to LibreTranslate.
+8. The translated text is returned to the frontend.
+9. The user sees the final translated text on screen.
+
+Clean enough. Slightly magical. Still mostly JavaScript.
 
 ## Requirements
-Before you begin, ensure that you have the following installed:
-- **Node.js** (LTS version recommended)
-- **npm** (bundled with Node.js)
-- **Whisper** (for transcription)
-- **Internet connection** (for the LibreTranslate API)
 
-## Installation and Setup
-1. **Clone the repository**:
-   ```
-   git clone https://github.com/your-username/real-time-translation-app.git
+Before running the project, make sure you have these installed:
 
-2. **Navigate to the project directory**:
-   ```
-    cd real-time-translation-app
-   ```
+- Node.js and npm
+- Python 3.11.x recommended
+- Whisper installed and available from the command line
+- LibreTranslate running locally
+- Internet connection for installing dependencies
 
-4. **Install the required dependencies: In the backend/ directory, run the following command**:
-   ```
-   npm install
-   ```
-5. **Start the server: To run the Express.js server, navigate to the backend/ directory and execute**:
-   ```
-   node server.js
-    ```
-7. **Access the application: Open your browser and navigate to**:
-   ```
-   http://localhost:3000
-   ```
-*This will display the web interface where you can upload files and select a target language.*
+## Installation
 
-### How It Works
-**Upload File**: Select an audio or video file (supported formats include .mp3, .wav, .mp4, etc.).
-**Choose Language**: Pick a target language for translation from the dropdown list (e.g., French, Spanish, etc.).
-**Submit**: The file is processed by the Whisper transcription engine, and the transcribed text is automatically translated into the selected language.
-**View Result**: The translated text will be displayed on the screen after processing.
+Clone the repository:
 
-### Error Handling and Timeouts
-**File Upload Errors**: If no file is selected or the upload fails, the app will notify the user with an error message.
-**Timeout for Long Processes**: If transcription takes too long (over 2 minutes), the process will be automatically terminated, and an error message will be displayed.
-**Translation Issues**: If translation fails due to connectivity or API issues, a descriptive error message will be shown.
-Customization
-
-*You can add support for more languages by editing the dropdown in the frontend/index.html file. Simply add new <option> elements corresponding to the language codes supported by LibreTranslate.*
-
-
-
-
-
-## Note:
-**To get this working on your machine uninstall the Python verson installes on the machine and download the [python 3.11.9](https://www.python.org/downloads/)version from official website**
-
-Trick to uninstall current version of python from your Machine: 
-(Only work if any-version of python is already installed in your machine if you never download the python in your machine simple download above version directly)
-First go to cmd run `python --version`` check the version already installed in your machine then go to Python official website and then download the version that is already persent in your machine and then it will download the [python-x.xx.x-amd64.exe] file, click on it Open it there you will see 3 option select last option of uninstall type text and there you go you succesfully uninstalled that version on your machine and after this done check the python version one more time you will get error now because now after doing this you don't have python in your machine now you can download this [python 3.11.9](https://www.python.org/downloads/)version from official website and then you are good to goo!!
-
-
-
-
-
-
-
-# Setting Up the Translation Backend Server
-
-## First run below command in root directory *So that we don't have nay trouble Later!*
- 
+```bash
+git clone https://github.com/ShreeGopi/Real_Time_Translation_app.git
+cd Real_Time_Translation_app
 ```
+
+Install Node.js dependencies:
+
+```bash
+npm install
+```
+
+Install Whisper-related Python dependencies:
+
+```bash
 pip install torch==2.0.1 numpy==1.24.3 whisper
 ```
 
-## 1. TL-backend
-*We will install LibreTranslate Locally using hatch in virtual environment so that we don't interfare and have conflicts in our projects*
+If the `whisper` package above does not work correctly, install Whisper directly from GitHub:
 
+```bash
+pip install git+https://github.com/openai/whisper.git
+```
 
-### Now run this in root directory
+## Setting Up LibreTranslate Locally
 
-   ``` 
-   mkdir TL-backend  
-   cd TL-backend 
-   ```
+This app expects LibreTranslate to run at:
 
-2. **Clone LibreTranslate: Clone the LibreTranslate repository into the TL-backend folder**:
+```text
+http://127.0.0.1:5000
+```
 
-   ``` 
-   git clone https://github.com/LibreTranslate/LibreTranslate.git
- 
-   ```
+Create a local folder for LibreTranslate:
 
-   ## Additonal run below command at another terminal at root location to download hatch
-   ```
-   pip install hatch
-   ```
-  
-3. **Now we install the virtual environment to do follow below commands**
-   ```
-   cd Tl-backend/LibreTranslate
-   ```
+```bash
+mkdir TL-backend
+cd TL-backend
+```
 
-   and after it we have intall *virtualenv*
-   ```
-   pip install virtualenv
-   ```
-   
-Now we have to make Virtaul envirnoment(we can name it anything for clarity i did *libretranslate-env*)
-   ```
-   virtualenv libretranslate-env
-   ```    
-after making our virtual environment we have to activate it
-   ```
-   libretranslate-env\Scripts\activate
-   ```
-# Remember to activate the environment with the command *libretranslate-env\Scripts\activate* every time you run the LibreTranslate server.
+Clone LibreTranslate:
 
-## Now we will install dependiceis of Libretranslate using hatch in our virutal environment
-   ```
-   hatch run pip install .
-   ```
+```bash
+git clone https://github.com/LibreTranslate/LibreTranslate.git
+cd LibreTranslate
+```
 
+Install helper tools:
 
+```bash
+pip install hatch virtualenv
+```
 
-## To run the server of LIbreTranslate run this 
+Create and activate a virtual environment:
 
-   ```
-   hatch run libretranslate
-   ```
+```bash
+virtualenv libretranslate-env
+libretranslate-env\Scripts\activate
+```
 
-it will look like this ![image](https://github.com/user-attachments/assets/af84c517-5151-4c66-99a9-b0548ba4367e)
+Install LibreTranslate inside the environment:
 
+```bash
+hatch run pip install .
+```
 
-# Additonal (important)
-*now we will redonwload the whiper and Cors run these:*
-   ```
-   pip install git+https://github.com/openai/whisper.git
-   ```
+Start the LibreTranslate server:
 
-and for instaling CORS run this
-   ```
-   npm install cors
-   ```
+```bash
+hatch run libretranslate
+```
 
-Now you run the `backend and Tl-backend` both server and check everything us running properly or not
+Keep this terminal running. LibreTranslate is the translation engine, so if this terminal is closed, translation will also go on a coffee break.
 
-- Close all terminal and open new terminal and go to `D:\Real_Time_Translation_App\backend>` and run this 
-   ```
-   cd backend 
-   ```
-   ```
-   node server.js
-   ```
-- to run libre-transltion backend go to `D:\Real_Time_Translation_App\TL-backend\LibreTranslate>` run this in new terminal (Remember we have run libreTrnalste backend in virtual environment) 
-   ```
-   libretranslate-env\Scripts\activate   
-   ```
-   ```
-   hatch run libretranslate
-   ```
+## Running the App
 
-both terminal should look like this
-![image](https://github.com/user-attachments/assets/83259f78-6250-473c-b482-3312d2e3a41d)
-![image](https://github.com/user-attachments/assets/49ba257c-a98c-4e78-825e-583144973d4c)
+Open a new terminal from the project root and start the Express backend:
 
-# All Set!!
+```bash
+cd backend
+node server.js
+```
 
-# Future Improvements
+Then open this URL in your browser:
 
-**Audio Output**: Generate translated audio versions of the transcribed content.
-**Live Streaming Support**: Extend the app's functionality to support real-time translation of live audio and video streams.
-**Multi-File Upload**: Allow users to upload multiple files at once for batch processing.
-**Improve frontend design for a better user experience.**
-**Add more language options for translation.**
-**Implement error handling and loading indicators.**
+```text
+http://localhost:3000
+```
+
+You should now see the upload page.
+
+## Using the App
+
+1. Choose an audio or video file.
+2. Search for a target language.
+3. Select the language from the dropdown.
+4. Click **Upload and Translate**.
+5. Wait while Whisper transcribes the file and LibreTranslate translates it.
+6. Read the translated text on the page.
+
+Supported files depend on what Whisper can process, but common formats like `.mp3`, `.wav`, and `.mp4` are good starting points.
+
+## API Endpoints
+
+### `POST /upload`
+
+Uploads an audio/video file, transcribes it, translates the transcript, and returns the translated text.
+
+Expected form data:
+
+- `file` - audio or video file
+- `language` - target language code, such as `fr`, `es`, or `de`
+
+Example response:
+
+```json
+{
+  "message": "Transcription and translation completed",
+  "translatedText": "Translated text appears here"
+}
+```
+
+### `GET /languages`
+
+Fetches supported languages from the local LibreTranslate server.
+
+## Error Handling
+
+The backend includes basic handling for:
+
+- Missing file uploads
+- Whisper transcription failures
+- Translation API failures
+- Long transcription jobs that exceed the 2-minute timeout
+
+If something fails, check both terminals:
+
+- Express backend terminal
+- LibreTranslate terminal
+
+The answer is usually hiding there, pretending to be a stack trace.
+
+## Notes
+
+- Whisper must be installed correctly and available as a command-line tool.
+- LibreTranslate must be running locally before translation will work.
+- Uploaded files and generated transcription files are stored in `backend/uploads`.
+- `TL-backend` and `uploads` are ignored by Git because they are local/generated folders.
+- Python 3.11.x is recommended for smoother compatibility.
+
+## Future Improvements
+
+Some useful next steps for this project:
+
+- Add translated audio output
+- Support live audio/video streaming translation
+- Allow multiple files to be uploaded at once
+- Add progress indicators for long transcription jobs
+- Improve frontend styling and mobile layout
+- Add stronger file validation and upload limits
+- Add tests for backend routes
+- Add deployment instructions
 
 ## License
-*This project is open-source and available under the MIT License.*
 
+This project is open source. The current package metadata uses the ISC license.
 
-### Notes:
-- This formatting uses Markdown elements such as headers, bullet points, and code blocks to enhance readability.
-- Make sure to replace `your-username` with your actual GitHub username in the clone command.
-- You can further customize sections to suit your project’s specifics.
+## Final Thought
 
-Feel free to modify any sections as needed!
+This project is a good example of connecting frontend file uploads, backend processing, AI-powered transcription, and translation APIs into one working flow. It is small, practical, and very resume-friendly, which is always a nice bonus.
