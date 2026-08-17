@@ -4,3 +4,4 @@ uploads/
 backend/uploads/
 .env
 *.log
+venv/
