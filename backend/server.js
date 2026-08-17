@@ -1,14 +1,39 @@
 const express = require('express');
+require('dotenv').config();
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const { execFile, spawnSync } = require('child_process');
 const axios = require('axios');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const libreTranslateUrl = process.env.LIBRETRANSLATE_URL || 'http://127.0.0.1:5000';
+const libreTranslateUrl = process.env.LIBRETRANSLATE_URL || 'https://127.0.0.1:5000';
+const isWindows = process.platform === 'win32';
+const localWhisperExecutable = path.join(__dirname, '..', 'venv', 'Scripts', isWindows ? 'whisper.exe' : 'whisper');
+const whisperCommand = process.env.WHISPER_COMMAND || (
+    fs.existsSync(localWhisperExecutable) ? localWhisperExecutable : 'whisper'
+);
+const whisperModel = process.env.WHISPER_MODEL || 'base';
+const ffmpegCommand = resolveFfmpegCommand();
+
+function resolveFfmpegCommand() {
+    if (process.env.FFMPEG_PATH) {
+        return process.env.FFMPEG_PATH;
+    }
+
+    try {
+        const ffmpegStaticPath = require('ffmpeg-static');
+        if (ffmpegStaticPath && fs.existsSync(ffmpegStaticPath)) {
+            return ffmpegStaticPath;
+        }
+    } catch {
+        // Fall back to PATH lookup below.
+    }
+
+    return 'ffmpeg';
+}
 
 // Enable CORS
 app.use(cors());
@@ -46,6 +71,59 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+function isPathLike(command) {
+    return path.isAbsolute(command) || command.includes('/') || command.includes('\\');
+}
+
+function commandExists(command) {
+    if (isPathLike(command)) {
+        return fs.existsSync(command);
+    }
+
+    const lookupCommand = isWindows ? 'where' : 'which';
+    const result = spawnSync(lookupCommand, [command], { stdio: 'ignore' });
+    return result.status === 0;
+}
+
+function getTranscriptionPrerequisiteError() {
+    if (!commandExists(whisperCommand)) {
+        return `Whisper executable was not found. Expected "${whisperCommand}".`;
+    }
+
+    if (!commandExists(ffmpegCommand)) {
+        return 'FFmpeg was not found. Install ffmpeg and make sure it is available on PATH before uploading media.';
+    }
+
+    return null;
+}
+
+function buildTranscriptionEnv() {
+    const extraPaths = [];
+
+    if (isPathLike(whisperCommand)) {
+        extraPaths.push(path.dirname(whisperCommand));
+    }
+
+    if (isPathLike(ffmpegCommand)) {
+        extraPaths.push(path.dirname(ffmpegCommand));
+    }
+
+    return {
+        ...process.env,
+        PATH: [...extraPaths, process.env.PATH || ''].filter(Boolean).join(path.delimiter),
+        PYTHONIOENCODING: 'utf-8'
+    };
+}
+
+function getProcessErrorDetail(output) {
+    const lines = output
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    return lines.at(-1);
+}
+
 // Route to handle file uploads and start transcription process
 app.post('/upload', upload.single('file'), (req, res) => {
     const file = req.file;
@@ -57,9 +135,32 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
     console.log('Processing uploaded file:', file.originalname);
 
+    const prerequisiteError = getTranscriptionPrerequisiteError();
+    if (prerequisiteError) {
+        console.error(prerequisiteError);
+        return res.status(500).json({ message: prerequisiteError });
+    }
+
     // Start the transcription process using Whisper
-    const transcriptionProcess = exec(`whisper "${filePath}" --language en --output_dir "${path.dirname(filePath)}"`);
+    const transcriptionProcess = execFile(
+        whisperCommand,
+        [filePath, '--language', 'en', '--model', whisperModel, '--output_dir', path.dirname(filePath)],
+        {
+            env: buildTranscriptionEnv(),
+            windowsHide: true
+        }
+    );
+    let transcriptionOutput = '';
+    let transcriptionError = '';
     let didTimeout = false;
+
+    transcriptionProcess.stdout?.on('data', (data) => {
+        transcriptionOutput += data.toString();
+    });
+
+    transcriptionProcess.stderr?.on('data', (data) => {
+        transcriptionError += data.toString();
+    });
 
     // Set a timeout to handle hanging processes
     const timeout = setTimeout(() => {
@@ -78,7 +179,11 @@ app.post('/upload', upload.single('file'), (req, res) => {
         console.log(`Transcription process exited with code ${code}`);
         
         if (code !== 0) {
-            return res.status(500).json({ message: 'Error in transcription process.' });
+            const detail = getProcessErrorDetail(transcriptionError || transcriptionOutput);
+            console.error('Whisper failed:', transcriptionError || transcriptionOutput);
+            return res.status(500).json({
+                message: detail || 'Error in transcription process.'
+            });
         }
 
         console.log('Whisper transcription completed successfully.');
@@ -118,7 +223,7 @@ app.post('/upload', upload.single('file'), (req, res) => {
         }
 
         console.error('Error in transcription process:', error);
-        return res.status(500).json({ message: 'Error in transcription process.' });
+        return res.status(500).json({ message: error.message || 'Error in transcription process.' });
     });
 });
 

@@ -161,9 +161,11 @@
                 body: formData
             });
 
-            if (!response.ok) throw new Error('File upload or translation failed');
-
             const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || 'File upload or translation failed');
+            }
+
             statusDiv.textContent = 'Translation complete!';
             showTranslatedText(result.translatedText);
 
